@@ -58,20 +58,41 @@ export default function Home() {
     restTime: 30,
   });
 
-  const toggle = (label: string) =>
-    setConfig(prev => ({
-      ...prev,
-      selected: prev.selected.includes(label)
-        ? prev.selected.filter(x => x !== label)
-        : [...prev.selected, label],
-    }));
+  const [running, setRunning] = useState(false);
+
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const setRange = (key: string, value: number) =>
     setConfig(prev => ({ ...prev, [key]: value }));
 
-  const start = () => {
+  useEffect(() => {
+    console.log("useEffect")
+    if (running) {
+      console.log("running");
 
-  }
+      const scheduleNext = () => {
+        const delay = Math.random() * (config.maxTime - config.minTime) + config.minTime;
+        return setTimeout(() => {
+          console.log("timeout")
+          const available = sounds.filter(x => config.selected.includes(x.label));
+          if (available.length > 0) {
+            const pick = available[Math.floor(Math.random() * available.length)];
+            play(pick.label);
+          }
+          timeoutRef.current = scheduleNext();
+        }, delay * 1000);
+      };
+
+      timeoutRef.current = scheduleNext();
+    }
+
+    console.log("not running")
+
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+
+  }, [running, config]);
 
   return (
     <main>
@@ -113,8 +134,9 @@ export default function Home() {
           <FormLabel>{config.restTime} seconds</FormLabel>
         </div>
         <div className="d-flex align-items-center gap-2"> 
-          <Button onClick={start} variant="success">Start</Button>
-          <Button onClick={start} variant="danger">Stop</Button>
+          <Button variant={running ? "danger" : "success"} onClick={() => setRunning(prev => !prev)}>
+            {running ? 'Stop' : 'Start'}
+          </Button>
         </div>
       </div>
     </main>
