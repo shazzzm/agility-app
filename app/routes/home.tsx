@@ -1,6 +1,7 @@
 import type { Route } from "./+types/home";
-import { Button, Form, FormLabel } from 'react-bootstrap';
+import { Button, Card, Form, FormLabel } from 'react-bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import { useRef, useEffect, useState } from 'react';
 
 interface SoundEntry {
   label: string;
@@ -9,13 +10,10 @@ interface SoundEntry {
 
 export function meta({}: Route.MetaArgs) {
   return [
-    { title: "New React Router App" },
-    { name: "description", content: "Welcome to React Router!" },
+    { title: "Agility Training" },
+    { name: "description", content: "" },
   ];
 }
-
-
-import { useRef, useEffect, useState } from 'react';
 
 export const useWithSounds = (sources: Array<SoundEntry>) => {
   const refs = useRef<Record<string, HTMLAudioElement>>({});
@@ -61,35 +59,47 @@ export default function Home() {
   const [running, setRunning] = useState(false);
 
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
+  const [restTime, setRestTime] = useState(0);
+  const restTimeRef = useRef(0);
   const setRange = (key: string, value: number) =>
     setConfig(prev => ({ ...prev, [key]: value }));
 
-  useEffect(() => {
-    console.log("useEffect")
-    if (running) {
-      console.log("running");
+  const startRest = () => {
+    restTimeRef.current = config.restTime * 1000;
+    setRestTime(restTimeRef.current);
+    timeoutRef.current = setTimeout(runRest, 1000);
+  }
 
-      const scheduleNext = () => {
-        const delay = Math.random() * (config.maxTime - config.minTime) + config.minTime;
-        return setTimeout(() => {
-          console.log("timeout")
-          const available = sounds.filter(x => config.selected.includes(x.label));
-          if (available.length > 0) {
-            const pick = available[Math.floor(Math.random() * available.length)];
-            play(pick.label);
-          }
-          timeoutRef.current = scheduleNext();
-        }, delay * 1000);
-      };
-
-      timeoutRef.current = scheduleNext();
+  const runRest = () => {
+    if (restTimeRef.current > 0) {
+      restTimeRef.current -= 1000;
+      setRestTime(restTimeRef.current);
+      timeoutRef.current = setTimeout(runRest, 1000);
+    } else {
+      scheduleRun();
     }
+  }
 
-    console.log("not running")
+  const scheduleRun = () => {
+    const delay = Math.random() * (config.maxTime - config.minTime) + config.minTime;
+    return setTimeout(() => {
+      const available = sounds.filter(x => config.selected.includes(x.label));
+      if (available.length > 0) {
+        const pick = available[Math.floor(Math.random() * available.length)];
+        play(pick.label);
+      }
+      startRest();
+    }, delay * 1000);
+  }
+
+  useEffect(() => {
+    if (running) {
+      timeoutRef.current = scheduleRun();
+    }
 
     return () => {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      setRestTime(0);
     };
 
   }, [running, config]);
@@ -102,41 +112,53 @@ export default function Home() {
         integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB"
         crossOrigin="anonymous"
       />
-      <div className="p-3" style={{maxWidth: 400}}>
-        <Form.Label>Sounds To Use</Form.Label>        
-        {
-          sounds.map((x) => (<Form.Check
-            key={x.label}
-            type="checkbox"
-            label={x.label}
-            onChange={ e =>
-              setConfig(prev => ({
-                  ...prev,
-                  selected: e.target.checked
-                    ? [...prev.selected, x.label]
-                    : prev.selected.filter(s => s !== x.label),
-              }))}
-          />))
-        }
-        <div className="d-flex align-items-center gap-2">
-          <Form.Label>Min Time</Form.Label><Form.Range value={config.minTime}
-            onChange={e => setRange('minTime', Number(e.target.value))} />
-          <FormLabel>{config.minTime} seconds</FormLabel>
+      <div className="row p-3">
+        <div className="col" style={{maxWidth: 400}}>
+          <Form.Label>Sounds To Use</Form.Label>        
+          {
+            sounds.map((x) => (<Form.Check
+              key={x.label}
+              type="checkbox"
+              label={x.label}
+              onChange={ e =>
+                setConfig(prev => ({
+                    ...prev,
+                    selected: e.target.checked
+                      ? [...prev.selected, x.label]
+                      : prev.selected.filter(s => s !== x.label),
+                }))}
+            />))
+          }
+          <div className="d-flex align-items-center gap-2">
+            <Form.Label>Min Time</Form.Label><Form.Range value={config.minTime}
+              onChange={e => setRange('minTime', Number(e.target.value))} max={10}/>
+            <FormLabel>{config.minTime} seconds</FormLabel>
+          </div>
+          <div className="d-flex align-items-center gap-2">
+            <Form.Label>Max Time</Form.Label><Form.Range value={config.maxTime}
+              onChange={e => setRange('maxTime', Number(e.target.value))} max={10}/>
+            <FormLabel>{config.maxTime} seconds</FormLabel>
+          </div>
+          <div className="d-flex align-items-center gap-2">
+            <Form.Label>Rest Time</Form.Label><Form.Range value={config.restTime}
+              onChange={e => setRange('restTime', Number(e.target.value))} max={120}/>
+            <FormLabel>{config.restTime} seconds</FormLabel>
+          </div>
+          <div className="d-flex align-items-center gap-2"> 
+            <Button variant={running ? "danger" : "success"} onClick={() => setRunning(prev => !prev)}>
+              {running ? 'Stop' : 'Start'}
+            </Button>
+          </div>
         </div>
-        <div className="d-flex align-items-center gap-2">
-          <Form.Label>Max Time</Form.Label><Form.Range value={config.maxTime}
-            onChange={e => setRange('maxTime', Number(e.target.value))} />
-          <FormLabel>{config.maxTime} seconds</FormLabel>
-        </div>
-        <div className="d-flex align-items-center gap-2">
-          <Form.Label>Rest Time</Form.Label><Form.Range value={config.restTime}
-            onChange={e => setRange('restTime', Number(e.target.value))} />
-          <FormLabel>{config.restTime} seconds</FormLabel>
-        </div>
-        <div className="d-flex align-items-center gap-2"> 
-          <Button variant={running ? "danger" : "success"} onClick={() => setRunning(prev => !prev)}>
-            {running ? 'Stop' : 'Start'}
-          </Button>
+        <div className="col">
+            <Card style={{ width: '18rem' }}>
+            <Card.Body>
+              <Card.Title>Rest Time</Card.Title>
+              <Card.Text>
+                {restTime/1000} s
+              </Card.Text>
+            </Card.Body>
+          </Card>
         </div>
       </div>
     </main>
