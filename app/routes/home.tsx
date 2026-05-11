@@ -7,6 +7,11 @@ interface SoundEntry {
   label: string;
   location: string;
 }
+enum State {
+  PAUSED,
+  GO,
+  REST
+};
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -61,12 +66,15 @@ export default function Home() {
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [restTime, setRestTime] = useState(0);
   const restTimeRef = useRef(0);
+  const [state, setState] = useState(State.PAUSED);
+
   const setRange = (key: string, value: number) =>
     setConfig(prev => ({ ...prev, [key]: value }));
 
   const startRest = () => {
     restTimeRef.current = config.restTime * 1000;
     setRestTime(restTimeRef.current);
+    setState(State.REST);
     timeoutRef.current = setTimeout(runRest, 1000);
   }
 
@@ -81,6 +89,7 @@ export default function Home() {
   }
 
   const scheduleRun = () => {
+    setState(State.GO);
     const delay = Math.random() * (config.maxTime - config.minTime) + config.minTime;
     return setTimeout(() => {
       const available = sounds.filter(x => config.selected.includes(x.label));
@@ -100,6 +109,7 @@ export default function Home() {
     return () => {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
       setRestTime(0);
+      setState(State.PAUSED);
     };
 
   }, [running, config]);
@@ -152,12 +162,29 @@ export default function Home() {
         </div>
         <div className="col">
             <Card style={{ width: '18rem' }}>
-            <Card.Body>
-              <Card.Title>Rest Time</Card.Title>
-              <Card.Text>
-                {restTime/1000} s
-              </Card.Text>
-            </Card.Body>
+              {
+                state === State.PAUSED ? (
+                  <Card.Body>
+                    <Card.Title>Paused</Card.Title>
+                    <Card.Text>
+                    </Card.Text>
+                  </Card.Body>
+                ) : state === State.GO ? 
+                ( <Card.Body>
+                    <Card.Title>Go!</Card.Title>
+                    <Card.Text>
+                    </Card.Text>
+                  </Card.Body>) 
+                :
+                (
+                  <Card.Body>
+                    <Card.Title>Rest</Card.Title>
+                    <Card.Text>
+                      {restTime/1000} s
+                    </Card.Text>
+                  </Card.Body>
+                )
+              }
           </Card>
         </div>
       </div>
