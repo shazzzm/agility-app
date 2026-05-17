@@ -67,6 +67,7 @@ export default function Home() {
   const [restTime, setRestTime] = useState(0);
   const restTimeRef = useRef(0);
   const [state, setState] = useState(State.PAUSED);
+  const configRef = useRef(config);
 
   const setRange = (key: string, value: number) =>
     setConfig(prev => ({ ...prev, [key]: value }));
@@ -90,10 +91,10 @@ export default function Home() {
 
   const scheduleRun = () => {
     setState(State.GO);
-    const delay = Math.random() * (config.maxTime - config.minTime) + config.minTime;
+    const delay = Math.random() * (configRef.current.maxTime - configRef.current.minTime) + configRef.current.minTime;
     return setTimeout(() => {
-      const available = sounds.filter(x => config.selected.includes(x.label));
-      if (available.length > 0) {
+    const available = sounds.filter(x => configRef.current.selected.includes(x.label));
+    if (available.length > 0) {
         const pick = available[Math.floor(Math.random() * available.length)];
         play(pick.label);
       }
@@ -112,7 +113,11 @@ export default function Home() {
       setState(State.PAUSED);
     };
 
-  }, [running, config]);
+  }, [running]);
+
+  useEffect(() => {
+    configRef.current = config;
+  }, [config]);
 
   return (
     <main>
