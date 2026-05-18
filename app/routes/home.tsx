@@ -44,16 +44,21 @@ export const useWithSounds = (sources: Array<SoundEntry>) => {
 
 const sounds : Array<SoundEntry> = [
   { "label": "Left",
-    "location": "/left.mp3"
+    "location": `${import.meta.env.BASE_URL}/left.mp3`
   },
   { "label": "Right",
-    "location": "/right.mp3"
+    "location": `${import.meta.env.BASE_URL}/right.mp3`
   }
 ]
+
+const beep = [{ "label": "Beep",
+    "location": `${import.meta.env.BASE_URL}/beep.mp3`
+  }];
 
 export default function Home() {
 
   const { play } = useWithSounds(sounds);
+  const { play: playBeep } = useWithSounds(beep);
   const [config, setConfig] = useState({
     selected: [] as string[],
     minTime: 1,
@@ -85,6 +90,7 @@ export default function Home() {
       setRestTime(restTimeRef.current);
       timeoutRef.current = setTimeout(runRest, 1000);
     } else {
+      playBeep("Beep");
       scheduleRun();
     }
   }

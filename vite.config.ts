@@ -4,6 +4,7 @@ import { defineConfig } from "vite";
 
 export default defineConfig({
   plugins: [tailwindcss(), reactRouter()],
+  base: process.env.NODE_ENV === 'production' ? '/agility-app/' : '/',
   resolve: {
     tsconfigPaths: true,
   },
