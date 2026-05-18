@@ -20,6 +20,8 @@ export function meta({}: Route.MetaArgs) {
   ];
 }
 
+const BASE_URL = import.meta.env.BASE_URL;
+
 export const useWithSounds = (sources: Array<SoundEntry>) => {
   const refs = useRef<Record<string, HTMLAudioElement>>({});
 
@@ -44,15 +46,15 @@ export const useWithSounds = (sources: Array<SoundEntry>) => {
 
 const sounds : Array<SoundEntry> = [
   { "label": "Left",
-    "location": `${import.meta.env.BASE_URL}/left.mp3`
+    "location": `${BASE_URL}left.mp3`
   },
   { "label": "Right",
-    "location": `${import.meta.env.BASE_URL}/right.mp3`
+    "location": `${BASE_URL}right.mp3`
   }
 ]
 
 const beep = [{ "label": "Beep",
-    "location": `${import.meta.env.BASE_URL}/beep.mp3`
+    "location": `${BASE_URL}beep.mp3`
   }];
 
 export default function Home() {
@@ -152,17 +154,17 @@ export default function Home() {
           }
           <div className="d-flex align-items-center gap-2">
             <Form.Label>Min Time</Form.Label><Form.Range value={config.minTime}
-              onChange={e => setRange('minTime', Number(e.target.value))} max={10}/>
+              onChange={e => setRange('minTime', Number(e.target.value))} max={10} disabled={running} />
             <FormLabel>{config.minTime} seconds</FormLabel>
           </div>
           <div className="d-flex align-items-center gap-2">
             <Form.Label>Max Time</Form.Label><Form.Range value={config.maxTime}
-              onChange={e => setRange('maxTime', Number(e.target.value))} max={10}/>
+              onChange={e => setRange('maxTime', Number(e.target.value))} max={10} disabled={running}/>
             <FormLabel>{config.maxTime} seconds</FormLabel>
           </div>
           <div className="d-flex align-items-center gap-2">
             <Form.Label>Rest Time</Form.Label><Form.Range value={config.restTime}
-              onChange={e => setRange('restTime', Number(e.target.value))} max={120}/>
+              onChange={e => setRange('restTime', Number(e.target.value))} max={120} disabled={running}/>
             <FormLabel>{config.restTime} seconds</FormLabel>
           </div>
           <div className="d-flex align-items-center gap-2"> 
@@ -170,8 +172,7 @@ export default function Home() {
               {running ? 'Stop' : 'Start'}
             </Button>
           </div>
-        </div>
-        <div className="col">
+          <div className="d-flex justify-content-center gap-2 p-2">
             <Card style={{ width: '18rem' }}>
               {
                 state === State.PAUSED ? (
@@ -196,7 +197,8 @@ export default function Home() {
                   </Card.Body>
                 )
               }
-          </Card>
+            </Card>
+          </div>
         </div>
       </div>
     </main>
